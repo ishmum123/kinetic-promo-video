@@ -29,3 +29,22 @@ echo "fonts -> $DEST"
 #   curl -sA "Mozilla/5.0 ... Chrome/120" \
 #     "https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600" | grep -E "src|font-weight"
 # and take the src whose unicode-range covers U+0000-00FF (the Latin subset).
+
+# ---------------------------------------------------------------------------
+# Adding a second family (e.g. for a non-Latin script)
+#
+# 1. Fetch the CSS with a real browser User-Agent, e.g.
+#      curl -sA "Mozilla/5.0 ... Chrome/120" "https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@400;600;700&display=block"
+# 2. GOTCHA: Google's CSS writes `@font-face {` WITH A SPACE, so a
+#    `@font-face\{` regex matches nothing. Use `@font-face\s*\{`.
+# 3. Pick the src whose unicode-range covers your script's block
+#    (e.g. U+0980 is Bengali; U+0000-00FF is Latin).
+# 4. GOTCHA: many Google fonts are VARIABLE — one file serves every weight.
+#    If you declare one @font-face per weight pointing at the same file you
+#    get synthesised (fake) bold. Declare a single @font-face with
+#    `font-weight:100 900` instead.
+#
+# Non-Latin subsets are much larger than Latin ones (a Bengali subset is
+# ~190 KB vs ~8 KB for Poppins Latin) — the "~8 KB each" size above is
+# Latin-only and doesn't generalize.
+# ---------------------------------------------------------------------------

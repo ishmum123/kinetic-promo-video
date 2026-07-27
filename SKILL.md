@@ -17,8 +17,11 @@ footage, no timeline app — and every frame is reproducible from a timestamp.
 - `$reference` — optional. A video URL or local file whose look should be matched.
 - `$brand` — optional. Name, tagline, URL, colors, logo. If absent, use a clearly
   flagged placeholder (never silently invent a brand and present it as final).
-- `$duration` — optional. Default 30–35 s. Keep under 60 s for Shorts/Reels/TikTok.
-- `$audio` — **default: silent.** Only add sound if the user explicitly asks.
+- `$duration` — optional. Default 30–35 s silent, 45–60 s narrated (the voice sets
+  the length — see `references/audio.md`). Keep under 60 s for Shorts/Reels/TikTok.
+- `$audio` — **default: narrated, no music.** Write a voice-over and build the
+  timeline around it unless the user asks for a silent piece. Music is the one
+  thing that stays off unless explicitly requested.
 
 ## Goal
 
@@ -59,19 +62,49 @@ vocabulary before writing any code.
 Never describe a reference you have not looked at frame by frame. A page's title
 or description tells you nothing about its motion design.
 
-#### 2b. No reference → use the house style
+#### 2b. No reference → derive the subject's own language first
 
-Read `references/default-style.md` and use it as-is. It is a complete,
-opinionated spec (dark navy + blue glow, geometric sans, blur-in kinetic type,
-glowing horizon, ring outro) that has already been validated end to end. Tell the
-user which style you're using in one line and that they can swap it by naming a
-reference video — then keep going. Do not stall for approval.
+Do **not** open `default-style.md` yet. Spend two minutes answering four
+questions about the actual subject:
+
+1. **What are the objects?** Books, jars, invoices, faces, a dashboard. These are
+   what should move.
+2. **What light do they live in?** Reading lamp, showroom, moonlight, screen
+   glow, daylight through a window.
+3. **How do they physically move?** Things with mass settle. Paper turns and
+   creases. Liquids spread. Data snaps.
+4. **What is the spine?** The one recurring element carrying the argument — a
+   countdown, a clock crossing a night, a receipt growing, a route filling in.
+   Ideally it *is* the claim, not decoration.
+
+If those four answers give you a coherent look, build that. A skincare promo
+about overnight repair gets night palette, serif type, slow settling motion and a
+dial running 10pm→7am — not glowing rings.
+
+**Fall back to the house style** when the subject genuinely suggests nothing
+specific (most B2B software, abstract services). Then read
+`references/default-style.md` and use it as-is: it is a complete, validated spec
+(dark navy + blue glow, geometric sans, blur-in kinetic type, glowing horizon,
+ring outro). Tell the user which style you're using in one line and that they can
+swap it by naming a reference video — then keep going. Do not stall for approval.
+
+**Honesty check before you build.** If your beat timings land within ~0.5 s of
+the template's and the signature shots survived — the echoed word stack, the ring
+bloom, the horizon-plus-slab card, blur-in as the only text move — you reskinned
+the template rather than designing for the subject. That is fine when you chose
+the fallback deliberately, and a defect when you didn't.
 
 **Success criteria**: a short written spec — canvas size, fps, duration, palette
 hexes, font, and the motion moves you will use — that you can point back to while
-building.
+building. If you derived a subject-native language, it also names the spine and
+the moves you are deliberately *not* using.
 
 ### 3. Write the beat sheet
+
+**Read `references/audio.md` and write the voice track first** — it is on by
+default. The voice owns the timeline: generate the lines, measure them, and
+derive beat times from the measurements rather than fitting speech into round
+numbers. Only skip this when the user asked for a silent piece.
 
 Read `references/beats.md` for the structure and copy rules, then map the user's
 **actual** differentiators onto beats. The middle third is where the product is
@@ -128,10 +161,20 @@ python render.py --at 6.2 12.0 19.5 # specific moments, full resolution
 repeat. Iterate here until the sheet is clean — a full render is 10× slower, so
 never use it as your feedback loop.
 
+**The two views answer different questions.** The contact sheet is for structure:
+timing, overlaps, dead frames, beat order. It is 270×480 per frame and it
+systematically *under-reads* dark or low-contrast work — a piece that looks muddy
+and broken on the sheet is often clean at full size. Judge contrast, palette and
+legibility only from `--at` frames, and pull at least one per beat whenever the
+palette is dark. Do not raise brightness to fix something the sheet exaggerated.
+
 What to hunt for on every pass:
 - two pieces of text legible at once mid-transition
 - anything visible before its cue (the classic `fill: 'both'` bug — see Rules)
 - background elements that read as recognizable shapes instead of atmosphere
+- stacked translucent blobs — overlapping alpha layers composite into visible
+  intersection arcs and read as discs; use one element with a rim that dissolves
+  inside its own box, sized larger than the frame
 - dead frames — any moment with nothing on screen
 - text or mockups crowded against the frame edges, or too small for a phone screen
 
@@ -144,24 +187,36 @@ cleanly and no defect above is present.
 ### 7. Render and verify
 
 ```bash
-python render.py                    # -> promo.mp4, ~3 min for 34 s
-ffprobe -v error -show_entries format=duration -show_entries stream=width,height,nb_frames \
-        -of default=noprint_wrappers=1 promo.mp4
-ffmpeg -y -v error -i promo.mp4 -vf "fps=1/1.2,scale=180:320,tile=10x3" -frames:v 1 verify.png
+python render.py                    # -> promo.mp4, ~1 screenshot per frame
+# narrated pieces: mux only after the encoder process has EXITED
+ffmpeg -y -i promo.mp4 -i vo/voice.wav -c:v copy -c:a aac -b:a 192k promo_av.mp4
+ffprobe -v error -show_entries format=duration \
+        -show_entries stream=codec_type,codec_name,width,height,nb_frames \
+        -of default=noprint_wrappers=1 promo_av.mp4
+ffmpeg -y -v error -i promo_av.mp4 -vf "fps=1/1.2,scale=180:320,tile=10x3" -frames:v 1 verify.png
 ```
+
+**Run the full render in the background.** It is ~1 screenshot per frame — a 50 s
+video is ~1500 frames and comfortably exceeds a 600 s command timeout. Poll for
+the render *process* to exit, not for the mp4 to appear: the file exists on disk
+long before it is finished, and muxing early gives `moov atom not found`.
 
 Read `verify.png` — verifying the **encoded output**, not the browser, is the
 point. Then delete the scratch sheets and frame directory.
 
 **Success criteria**: ffprobe reports the expected duration, 1080×1920, and
-`fps × duration` frames; `verify.png` matches the beat sheet end to end.
+`nb_frames == fps × duration`; for narrated pieces an audio stream is present and
+the duration matches the voice bed; `verify.png` matches the beat sheet end to
+end. A short file with a missing ending usually means `-shortest` met a stale
+voice track — see `references/audio.md`.
 
 ### 8. Hand it over
 
 Write a README next to the video with: the beat sheet, the rebrand constants,
 the render commands, and the two harness gotchas. Then report to the user:
 
-- where the file is and its exact specs (size, duration, fps, **silent**)
+- where the file is and its exact specs (size, duration, fps, and whether it is
+  narrated or silent — plus the TTS voice used, so it can be regenerated)
 - the beat table
 - **every placeholder and invented number, called out explicitly** — brand names,
   URLs, and any metric shown in a mockup. Say plainly that fabricated figures must
@@ -181,8 +236,11 @@ to change it.
 
 Hard constraints. Each is a failure this pipeline has already produced.
 
-1. **Silent by default.** No music, no sound design, unless explicitly requested.
-   Say "silent" when reporting, so quiet playback isn't read as a bug.
+1. **Narrated by default, never music.** Write a voice-over and let it own the
+   timeline unless the user asked for a silent piece. Music and sound design stay
+   off unless explicitly requested — you cannot supply licensed tracks, and never
+   pull audio from a streaming site. When you do ship a silent piece, say
+   "silent" when reporting so quiet playback isn't read as a bug.
 
 2. **One animation per element, covering enter → hold → exit.** Two separate
    WAAPI animations with `fill: 'both'` fight: the exit clip applies its *first*
@@ -211,6 +269,15 @@ Hard constraints. Each is a failure this pipeline has already produced.
 8. **Vertical, 1080×1920, 30 fps, under 60 s** unless the user says otherwise.
    Type below ~30 px is unreadable on a phone; mockup body text should sit at
    16–24 px only inside a device frame, never as primary copy.
+
+9. **`__ready` must wait on images, not just fonts.** Any scene containing `<img>`
+   will otherwise capture its first frames with empty cells — the render succeeds
+   and the output is quietly wrong. The starter's ready gate already does this;
+   keep it if you rewrite the driver.
+
+10. **Animating an SVG path's `d` across keyframes is unreliable** in headless
+    Chromium — it silently does nothing or snaps. Draw two paths and crossfade
+    them instead.
 
 ## Edge cases
 

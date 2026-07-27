@@ -510,7 +510,13 @@ window.seek = function(t){
   for(const a of anims){ a.currentTime = ms; }
 };
 window.__ready = false;
-document.fonts.ready.then(()=>{ window.seek(0); requestAnimationFrame(()=>{ window.__ready = true; }); });
+/* wait on fonts AND images: any <img> in the scene decodes late and the
+   renderer will otherwise capture the first frames with empty cells */
+Promise.all([
+  document.fonts.ready,
+  ...Array.from(document.images).map(im => im.complete ? Promise.resolve()
+      : new Promise(res => { im.addEventListener('load', res); im.addEventListener('error', res); }))
+]).then(()=>{ window.seek(0); requestAnimationFrame(()=>{ window.__ready = true; }); });
 </script>
 </body>
 </html>

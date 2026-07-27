@@ -25,6 +25,7 @@ def main():
     ap.add_argument("--contact", action="store_true")
     ap.add_argument("--at", nargs="*", type=float)
     ap.add_argument("--out", default=str(HERE / "promo.mp4"))
+    ap.add_argument("--keep-frames", action="store_true", help="skip deleting .frames after encode")
     args = ap.parse_args()
 
     from playwright.sync_api import sync_playwright
@@ -80,8 +81,11 @@ def main():
         "-pix_fmt", "yuv420p", "-movflags", "+faststart",
         "-vf", "format=yuv420p", args.out,
     ], check=True)
-    shutil.rmtree(frames, ignore_errors=True)
-    print("wrote", args.out)
+    if args.keep_frames:
+        print(f"kept frames in {frames}")
+    else:
+        shutil.rmtree(frames, ignore_errors=True)
+    print(f"wrote {args.out}  ({total} frames @ {FPS} fps = {round(total / FPS, 2)}s)")
 
 
 if __name__ == "__main__":

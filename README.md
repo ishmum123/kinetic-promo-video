@@ -20,9 +20,9 @@ npx skills add ishmum123/kinetic-promo-video
 
 > make me a video like https://youtube.com/shorts/XXXX for my business
 
-You get `promo.mp4` (1080×1920, 30 fps, H.264, silent by default), the
-`scene.html` that generated it, a `render.py` that reproduces it, and a README
-with the beat sheet and the constants to rebrand it.
+You get `promo.mp4` (1080×1920, 30 fps, H.264, narrated by default — no music),
+the `scene.html` that generated it, a `render.py` that reproduces it, and a
+README with the beat sheet and the constants to rebrand it.
 
 ## Why HTML instead of an editor
 
@@ -60,6 +60,7 @@ SKILL.md                     the pipeline, the rules, the edge cases
 references/teardown.md       reference video → a written spec you can build to
 references/default-style.md  the house style, complete, plus three variants
 references/beats.md          beat structure and copy rules
+references/audio.md          voice-led timeline, TTS engines, mux traps
 templates/scene-starter.html animation harness + seven example beats
 templates/render.py          frame renderer / encoder
 templates/fetch-fonts.sh     Poppins woff2 subsets, ~40 KB, for offline renders
@@ -79,7 +80,9 @@ Each one is a failure this pipeline has already produced:
   the image → fix → repeat.
 - **Background stays atmosphere.** Narrow rotated gradient bars read as giant
   letter shapes across the frame; rays need width, heavy blur, low opacity.
-- **Silent by default**, and every placeholder brand or invented metric is called
-  out on delivery rather than quietly shipped as fact.
+- **Narrated by default, never music**, and the voice owns the timeline — beat
+  times are derived from measured speech, not the other way round.
+- **Every placeholder brand or invented metric is called out** on delivery rather
+  than quietly shipped as fact.
 
 MIT.
