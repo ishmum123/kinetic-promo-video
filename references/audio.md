@@ -60,9 +60,16 @@ means hand-editing every beat. With `cues.js`, you regenerate and re-render.
 
 ### 5. Mux, after the video encode has fully finished
 
+The standard shape: render the video to a **silent master** and mux into a
+separate file, keeping the master.
+
 ```bash
-ffmpeg -y -i promo.mp4 -i voice.wav -c:v copy -c:a aac -b:a 192k promo_av.mp4
+python render.py --out promo_silent.mp4
+ffmpeg -y -i promo_silent.mp4 -i voice.wav -c:v copy -c:a aac -b:a 192k promo.mp4
 ```
+
+A bad mux, a voice re-take, or a tempo change then costs seconds, never a
+re-render — cheaper and simpler than `--keep-frames`.
 
 ## Traps
 
@@ -83,9 +90,9 @@ ffmpeg -y -i promo.mp4 -i voice.wav -c:v copy -c:a aac -b:a 192k promo_av.mp4
    `nb_frames` must equal `fps × DUR`. Check it before you believe the output.
 
 3. **Do not mux over your only copy.** `render.py` cleans up its frame directory
-   when it finishes, so a bad mux cannot be fixed by re-encoding — it costs a
-   full re-render. Write to `promo_av.mp4` and only then replace, or render with
-   `--keep-frames`.
+   when it finishes, so a bad mux over the encode cannot be fixed by re-encoding
+   — it costs a full re-render. The silent-master shape above makes this
+   impossible; use it rather than `--keep-frames`.
 
 4. **Wait for the encoder to exit.** The mp4 exists on disk long before it is
    finished; muxing early gives `moov atom not found`. Poll for the render
@@ -124,6 +131,10 @@ before building a timeline on one:
 - **Output format.** Confirm what you actually get rather than trusting the
   declared content type — `file` and `ffprobe` on the first clip. An endpoint
   documented as returning JSON may return raw WAV bytes.
+
+For any engine: write URLs and Latin brand names phonetically in the script's
+own language ("rokomari dot com" in Bengali script, not `rokomari.com`) —
+otherwise TTS spells them out letter by letter.
 
 ## Music
 

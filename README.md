@@ -78,6 +78,9 @@ Each one is a failure this pipeline has already produced:
 - **Never claim it looks good without looking.** The renderer will happily
   produce 1000 frames of a broken layout, so the loop is: contact sheet → read
   the image → fix → repeat.
+- **Pictograms are judged at full resolution** — at tile size a goat can pass
+  that reads as a beetle full-size. And silhouette animals get no eyes: an eye
+  dot tips an icon into life-like.
 - **Background stays atmosphere.** Narrow rotated gradient bars read as giant
   letter shapes across the frame; rays need width, heavy blur, low opacity.
 - **Narrated by default, never music**, and the voice owns the timeline — beat

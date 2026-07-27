@@ -145,6 +145,14 @@ Build UI mockups (dashboards, phones, laptops, cards, chips) as plain DOM + CSS
 and animate them in — they carry the "real product" feel that pure type cannot.
 Charts are divs and inline SVG; no chart library, no images, no external requests.
 
+A hard cut is a legitimate move: two `win()` layers sharing an exact time
+boundary, entered with `steps(1,end)`, give a deliberate single-frame cut — the
+right tool for a tonal snap such as story-world → flat brand color. Everything
+else eases; the cut lands *because* it is the only one.
+
+Real multicolour logos are often illegible on both dark scenes and flat brand
+grounds — put the asset on a small white plate rather than recoloring it.
+
 **Rules**: see the Rules section. They are not style preferences — each one is a
 specific failure this skill has already hit.
 
@@ -166,7 +174,9 @@ timing, overlaps, dead frames, beat order. It is 270×480 per frame and it
 systematically *under-reads* dark or low-contrast work — a piece that looks muddy
 and broken on the sheet is often clean at full size. Judge contrast, palette and
 legibility only from `--at` frames, and pull at least one per beat whenever the
-palette is dark. Do not raise brightness to fix something the sheet exaggerated.
+palette is dark, plus one per pictogram or illustration — recognizability cannot
+be judged at tile size (see Rule 12). Do not raise brightness to fix something
+the sheet exaggerated.
 
 What to hunt for on every pass:
 - two pieces of text legible at once mid-transition
@@ -278,6 +288,17 @@ Hard constraints. Each is a failure this pipeline has already produced.
 10. **Animating an SVG path's `d` across keyframes is unreliable** in headless
     Chromium — it silently does nothing or snaps. Draw two paths and crossfade
     them instead.
+
+11. **Set `transform-origin` explicitly on any SVG group you translate and scale
+    together.** The default origin is the element's own center, so the scale
+    component drags the object sideways mid-move. Same failure family as the
+    path-`d` rule: it renders, it's just quietly wrong.
+
+12. **Pictograms are judged at full resolution, never on the contact sheet.** At
+    tile size a line-art goat read fine; at full res it read as a beetle. Any
+    object the viewer must *recognize* gets its own `--at` check. And silhouette
+    animals get no eyes — an eye dot tips a pictogram from icon to life-like,
+    which reads wrong and has already drawn a client correction.
 
 ## Edge cases
 

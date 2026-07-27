@@ -68,6 +68,15 @@ Match the *system* — palette, type, motion vocabulary, pacing — and write ne
 copy and new mockups for the user's product. Copying a competitor's exact script
 or logo is not the assignment and is not defensible.
 
+**A live-action reference is still usable.** When the reference is actors and
+footage, nothing visual is clonable — what transfers is the narrative system:
+the story arc and its turn, the caption conventions, where the brand mark sits
+and that it persists, a color-snap at the turn, the endcard layout (benefit
+chips, logo lockup). Write a new story for the user's product and build its
+world as motion graphics. Validated: a live-action comedy ad (escalating excuse
+tale → "why make up stories?" turn → flat brand endcard) translated cleanly into
+kinetic illustration with the same three-act shape.
+
 Note anything you deliberately dropped and why (a 3D product render you can't
 reproduce in CSS, licensed footage, a specific licensed typeface). Tell the user
 in one line rather than silently shipping something thinner than the reference.
