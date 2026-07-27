@@ -1,6 +1,6 @@
 ---
 name: kinetic-promo-video
-description: Produce a finished vertical promo video (mp4) for a product, service, or brand - kinetic typography, animated UI mockups, motion-graphics polish - by writing a deterministic HTML timeline and frame-rendering it with a headless browser and ffmpeg. Matches the look of a reference video when the user supplies one (YouTube/TikTok/Reels URL or local file), and falls back to a validated built-in house style when they do not. Use whenever the user asks for a promo, ad, explainer, launch, teaser, demo, or trailer video, a Short/Reel/TikTok, "a video like <link>", or an animated version of a landing page - even when they have no editor, no footage, and no designer.
+description: Produce a finished vertical promo video (mp4) for a product, service, or brand - kinetic typography, animated UI mockups, motion-graphics polish - by writing a deterministic HTML timeline and frame-rendering it with a headless browser and ffmpeg. Matches the look of a reference video when the user supplies one (YouTube/TikTok/Reels URL or local file), and falls back to a validated built-in house style when they do not. Use whenever the user asks for a promo, ad, explainer, launch, teaser, demo, or trailer video, a Short/Reel/TikTok, "a video like <link>", or an animated version of a landing page - even when they have no editor, no footage, and no designer. Not for working on existing footage - trimming, captioning, or assembling real video files is out of scope; everything here is rendered from scratch.
 ---
 
 # Kinetic Promo Video
@@ -26,10 +26,11 @@ footage, no timeline app — and every frame is reproducible from a timestamp.
 ## Goal
 
 `promo.mp4` — 1080×1920, 30 fps, H.264, playable and correct on first watch —
-plus the `scene.html` that generated it, a `render.py` that reproduces it, and a
-README with the beat sheet and the constants to rebrand it. Success is not "a
-file exists": it is **frames you have looked at** that read cleanly, with no
-overlapping text, no elements visible before their cue, and no dead air.
+plus the `scene.html` that generated it, a `render.py` that reproduces it, a
+`voice.srt` caption file for narrated pieces, and a README with the beat sheet
+and the constants to rebrand it. Success is not "a file exists": it is
+**frames you have looked at** that read cleanly, with no overlapping text, no
+elements visible before their cue, and no dead air.
 
 ## Steps
 
@@ -44,9 +45,7 @@ python3 -m venv .venv && .venv/bin/pip install -q playwright && .venv/bin/playwr
 only for reference teardown. Prefer a venv — the user's system Python may be
 externally managed.
 
-**Success criteria**: `ffmpeg -version` works and
-`.venv/bin/python -c "from playwright.sync_api import sync_playwright; sync_playwright().start().chromium.executable_path"`
-prints a path.
+**Success criteria**: `ffmpeg -version` works and `.venv/bin/python -c "from playwright.sync_api import sync_playwright; sync_playwright().start().chromium.executable_path"` prints a path.
 
 ### 2. Establish the visual target
 
@@ -55,7 +54,7 @@ prints a path.
 #### 2a. Reference given → tear it down
 
 Read `references/teardown.md` and follow it. In short: download it, probe it,
-extract 1 fps contact sheets, **actually Read the sheet images**, and write down
+extract 1 fps contact sheets, **actually read the sheet images**, and write down
 dimensions, duration, palette, type treatment, beat structure, and motion
 vocabulary before writing any code.
 
@@ -104,11 +103,15 @@ the moves you are deliberately *not* using.
 **Read `references/audio.md` and write the voice track first** — it is on by
 default. The voice owns the timeline: generate the lines, measure them, and
 derive beat times from the measurements rather than fitting speech into round
-numbers. Only skip this when the user asked for a silent piece.
+numbers. Keep the measured per-line timings — they become `voice.srt` at
+delivery. Only skip this when the user asked for a silent piece.
 
 Read `references/beats.md` for the structure and copy rules, then map the user's
 **actual** differentiators onto beats. The middle third is where the product is
 sold: it must contain the specific reasons this thing is better, not adjectives.
+Assume muted playback — most Shorts/Reels viewers never hear the voice — so
+every claim in the voice-over must also land as on-screen text, not only as
+narration.
 
 Write the beat sheet out as a table (t-range → beat) before writing code. Getting
 the pacing wrong is far more expensive to fix after the scenes are built.
@@ -121,6 +124,8 @@ the ranges are contiguous with no gaps > 0.3 s.
 ### 4. Scaffold from the templates
 
 `$SKILL` below is this skill's own directory — the one holding this SKILL.md.
+Resolve it from your skills listing rather than guessing a path; it is often
+mounted read-only, which is fine because everything gets copied out.
 
 ```bash
 mkdir -p video && cp "$SKILL/templates/render.py" video/
@@ -165,9 +170,9 @@ python render.py --contact          # 24-frame overview, ~20 s
 python render.py --at 6.2 12.0 19.5 # specific moments, full resolution
 ```
 
-**Read the resulting PNGs with the Read tool and inspect them.** Then fix and
-repeat. Iterate here until the sheet is clean — a full render is 10× slower, so
-never use it as your feedback loop.
+**Read the resulting PNGs with your image-reading tool — whatever the harness
+calls it — and inspect them.** Then fix and repeat. Iterate here until the sheet
+is clean — a full render is 10× slower, so never use it as your feedback loop.
 
 **The two views answer different questions.** The contact sheet is for structure:
 timing, overlaps, dead frames, beat order. It is 270×480 per frame and it
@@ -179,6 +184,7 @@ be judged at tile size (see Rule 12). Do not raise brightness to fix something
 the sheet exaggerated.
 
 What to hunt for on every pass:
+
 - two pieces of text legible at once mid-transition
 - anything visible before its cue (the classic `fill: 'both'` bug — see Rules)
 - background elements that read as recognizable shapes instead of atmosphere
@@ -196,6 +202,11 @@ cleanly and no defect above is present.
 
 ### 7. Render and verify
 
+**Smoke-test the encoder first.** Render a ~2 s slice — via a range flag if your
+`render.py` copy has one, otherwise by temporarily shrinking the duration
+constants — and ffprobe the result. Encoder and mux problems surface in seconds
+here instead of after a multi-minute full render.
+
 ```bash
 python render.py                    # -> promo.mp4, ~1 screenshot per frame
 # narrated pieces: mux only after the encoder process has EXITED
@@ -211,14 +222,18 @@ video is ~1500 frames and comfortably exceeds a 600 s command timeout. Poll for
 the render *process* to exit, not for the mp4 to appear: the file exists on disk
 long before it is finished, and muxing early gives `moov atom not found`.
 
+For narrated pieces, write `voice.srt` from the per-line timings measured in
+step 3 — the numbers already exist; this is a formatting pass, not new work.
+
 Read `verify.png` — verifying the **encoded output**, not the browser, is the
 point. Then delete the scratch sheets and frame directory.
 
-**Success criteria**: ffprobe reports the expected duration, 1080×1920, and
-`nb_frames == fps × duration`; for narrated pieces an audio stream is present and
-the duration matches the voice bed; `verify.png` matches the beat sheet end to
-end. A short file with a missing ending usually means `-shortest` met a stale
-voice track — see `references/audio.md`.
+**Success criteria**: ffprobe reports the expected duration, the expected
+dimensions (1080×1920 unless the user changed the aspect), and
+`nb_frames == fps × duration`; for narrated pieces an audio stream is present,
+the duration matches the voice bed, and `voice.srt` exists; `verify.png` matches
+the beat sheet end to end. A short file with a missing ending usually means
+`-shortest` met a stale voice track — see `references/audio.md`.
 
 ### 8. Hand it over
 
@@ -227,6 +242,8 @@ the render commands, and the two harness gotchas. Then report to the user:
 
 - where the file is and its exact specs (size, duration, fps, and whether it is
   narrated or silent — plus the TTS voice used, so it can be regenerated)
+- the `voice.srt` path for narrated pieces, and that Shorts/Reels/TikTok accept
+  it as an upload alongside the video
 - the beat table
 - **every placeholder and invented number, called out explicitly** — brand names,
   URLs, and any metric shown in a mockup. Say plainly that fabricated figures must
@@ -249,8 +266,10 @@ Hard constraints. Each is a failure this pipeline has already produced.
 1. **Narrated by default, never music.** Write a voice-over and let it own the
    timeline unless the user asked for a silent piece. Music and sound design stay
    off unless explicitly requested — you cannot supply licensed tracks, and never
-   pull audio from a streaming site. When you do ship a silent piece, say
-   "silent" when reporting so quiet playback isn't read as a bug.
+   pull audio from a streaming site. Assume muted playback regardless: every
+   voice-over claim is mirrored as on-screen text, and narrated pieces ship with
+   a `voice.srt`. When you do ship a silent piece, say "silent" when reporting so
+   quiet playback isn't read as a bug.
 
 2. **One animation per element, covering enter → hold → exit.** Two separate
    WAAPI animations with `fill: 'both'` fight: the exit clip applies its *first*
@@ -300,12 +319,21 @@ Hard constraints. Each is a failure this pipeline has already produced.
     animals get no eyes — an eye dot tips a pictogram from icon to life-like,
     which reads wrong and has already drawn a client correction.
 
+> Rules 10–11 are workarounds for specific headless-Chromium behavior, validated
+> against Playwright 1.59 (Chromium 149, browser build `chromium-1228`). After a
+> major Playwright/Chromium upgrade, re-verify them: render the untouched starter
+> and read the sheet before trusting the templates.
+
 ## Edge cases
 
 - **`yt-dlp` fails or the reference is private** — ask for a local file or
   screenshots; if neither, fall back to `default-style.md` and say so.
 - **No Chromium** — `playwright install chromium` needs network. Without it,
   there is no renderer; stop and tell the user rather than producing nothing.
+- **No TTS engine available** — narration is the default, but if no engine in
+  `references/audio.md` works (offline, missing binaries), do not stall: fall
+  back to a silent piece with every voice line promoted to on-screen copy, and
+  tell the user why it shipped silent.
 - **Fonts unavailable offline** — `fetch-fonts.sh` needs network once. Fall back
   to a geometric system font (`Futura`, `Avenir Next`, `Century Gothic`) and note
   the substitution.

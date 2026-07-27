@@ -8,6 +8,15 @@ no designer.
 Give it a reference video and it matches that look. Give it nothing and it uses a
 validated house style.
 
+## See it
+
+A 34-second silent piece this skill produced for a business-analyst tool
+("ClearCut" is a placeholder brand):
+
+<img src="examples/clearcut/preview.gif" width="270" alt="ClearCut promo preview — kinetic typography and UI mockups on dark navy">
+
+Full quality: [`examples/clearcut/promo.mp4`](examples/clearcut/promo.mp4)
+
 ## Install
 
 ```bash
@@ -18,11 +27,15 @@ npx skills add ishmum123/kinetic-promo-video
 
 > make me a promo video for this repo — 30 seconds, vertical
 
-> make me a video like https://youtube.com/shorts/XXXX for my business
+> make me a video like <https://youtube.com/shorts/XXXX> for my business
 
 You get `promo.mp4` (1080×1920, 30 fps, H.264, narrated by default — no music),
-the `scene.html` that generated it, a `render.py` that reproduces it, and a
-README with the beat sheet and the constants to rebrand it.
+a `voice.srt` caption file for narrated pieces, the `scene.html` that generated
+it, a `render.py` that reproduces it, and a README with the beat sheet and the
+constants to rebrand it.
+
+Everything is rendered from scratch — this skill doesn't edit, trim, or caption
+existing footage.
 
 ## Why HTML instead of an editor
 
@@ -42,14 +55,14 @@ diffable text file, and rebranding is three constants.
 
 ## Requirements
 
-| Tool | Needed for |
-|---|---|
-| `ffmpeg` / `ffprobe` | encoding, contact sheets |
-| `python3` + `playwright` (chromium) | frame rendering |
-| `yt-dlp` | optional — only to tear down a reference video |
+| Tool                                | Needed for                                     |
+| ----------------------------------- | ---------------------------------------------- |
+| `ffmpeg` / `ffprobe`                | encoding, contact sheets                       |
+| `python3` + `playwright` (chromium) | frame rendering                                |
+| `yt-dlp`                            | optional — only to tear down a reference video |
 
 ```bash
-brew install ffmpeg yt-dlp
+brew install ffmpeg yt-dlp        # macOS; apt/dnf equivalents on Linux
 python3 -m venv .venv && .venv/bin/pip install playwright && .venv/bin/playwright install chromium
 ```
 
@@ -68,24 +81,21 @@ templates/fetch-fonts.sh     Poppins woff2 subsets, ~40 KB, for offline renders
 
 ## The rules it enforces
 
-Each one is a failure this pipeline has already produced:
+Each one is a failure this pipeline has already produced. A taste:
 
 - **One animation per element, covering enter → hold → exit.** Two separate Web
-  Animations with `fill: 'both'` fight — the exit clip applies its first keyframe
-  from `t = 0` and pins the element visible for the entire video.
-- **Consecutive text fully exits before the next enters.** Two legible lines
-  mid-crossfade reads as a rendering bug, not a transition.
+  Animations with `fill: 'both'` fight — the exit clip pins the element visible
+  for the entire video.
 - **Never claim it looks good without looking.** The renderer will happily
   produce 1000 frames of a broken layout, so the loop is: contact sheet → read
   the image → fix → repeat.
-- **Pictograms are judged at full resolution** — at tile size a goat can pass
-  that reads as a beetle full-size. And silhouette animals get no eyes: an eye
-  dot tips an icon into life-like.
-- **Background stays atmosphere.** Narrow rotated gradient bars read as giant
-  letter shapes across the frame; rays need width, heavy blur, low opacity.
-- **Narrated by default, never music**, and the voice owns the timeline — beat
-  times are derived from measured speech, not the other way round.
-- **Every placeholder brand or invented metric is called out** on delivery rather
-  than quietly shipped as fact.
+- **Narrated by default, never music** — the voice owns the timeline, every
+  voice-over claim is mirrored on screen for muted playback, and captions ship
+  as `.srt`.
+- **Every placeholder brand or invented metric is called out** on delivery
+  rather than quietly shipped as fact.
+
+The full list — twelve rules, each with the specific failure behind it — lives
+in [SKILL.md](SKILL.md).
 
 MIT.

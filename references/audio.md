@@ -71,6 +71,20 @@ ffmpeg -y -i promo_silent.mp4 -i voice.wav -c:v copy -c:a aac -b:a 192k promo.mp
 A bad mux, a voice re-take, or a tempo change then costs seconds, never a
 re-render — cheaper and simpler than `--keep-frames`.
 
+### 6. Emit `voice.srt` from the same cues
+
+The numbers in `cues.js` are already caption timings — writing `voice.srt` is a
+formatting pass, not new work:
+
+```
+1
+00:00:01,000 --> 00:00:05,510
+<line 01 text>
+```
+
+One entry per cue, `t` → `end`, comma as the millisecond separator. Ship it next
+to the mp4; Shorts/Reels/TikTok accept it as an upload alongside the video.
+
 ## Traps
 
 1. **Regenerating the voice means regenerating BOTH `voice.wav` and `cues.js`.**
