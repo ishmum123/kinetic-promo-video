@@ -133,8 +133,8 @@ before building a timeline on one:
   documented as returning JSON may return raw WAV bytes.
 
 For any engine: write URLs and Latin brand names phonetically in the script's
-own language ("rokomari dot com" in Bengali script, not `rokomari.com`) —
-otherwise TTS spells them out letter by letter.
+own language ("acme dot com" spelled out in the script's own alphabet, not
+`acme.com`) — otherwise TTS spells them out letter by letter.
 
 ## Music
 
